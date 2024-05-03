@@ -3,10 +3,6 @@ Changes Microsoft 365 Licenses assigned to users (in bulk)
 ![image](https://github.com/ITAutomator/M365UserLicenseChange/assets/135157036/36144eb9-75a7-4d5a-97a1-370de44dc25e)
 
 
-Overview
-Changes Microsoft 365 Licenses assigned to users (in bulk).
-![image](https://github.com/ITAutomator/M365UserLicenseChange/assets/135157036/be9e59e0-f190-427c-a4dc-f32a04b358d6)
-
 In this example 
 User1 licenses will be replaced with M365 E5
 User2 licenses will be replaced with M365 Business Premium and Information Governance
