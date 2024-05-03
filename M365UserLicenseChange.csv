@@ -1,0 +1,5 @@
+﻿User,LicensesToAdd,LicensesToRemove
+user1@contoso.com,SPE_E5,<all>
+user2@contoso.com,"SPB,M365_INFO_PROTECTION_GOVERNANCE",<all>
+user3@contoso.com,M365_INFO_PROTECTION_GOVERNANCE,
+user4@contoso.com,M365_INFO_PROTECTION_GOVERNANCE,
