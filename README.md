@@ -2,6 +2,8 @@
 Changes Microsoft 365 Licenses assigned to users (in bulk)
 ![image](https://github.com/ITAutomator/M365UserLicenseChange/assets/135157036/36144eb9-75a7-4d5a-97a1-370de44dc25e)
 
+See User guide (pdf)https://github.com/ITAutomator/M365UserLicenseChange/blob/main/M365UserLicenseChange%20Readme.pdf for more information
+To Download: Click the green Code button (above) and click Download Zip 
 
 In this example 
 User1 licenses will be replaced with M365 E5
