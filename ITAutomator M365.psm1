@@ -359,10 +359,12 @@ Function ConnectMgGraph ($myscopes=$null, $domain=$null)
         $module= "Microsoft.Graph.Authentication" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $false; Write-Host $lm_result
         #Read-Host "Press (Enter) to continue"
         $connected_ok=$false
-        if (Get-MgContext -ErrorAction SilentlyContinue)
+        #Get-MgContext -ErrorAction SilentlyContinue
+        $domain_mg = Get-MgDomain -ErrorAction Ignore| Where-object IsDefault -eq $True | Select-object -ExpandProperty Id
+        if ($domain_mg)
         { # has Get-MgContext
             # Get-MgContext | Select-object -expand Scopes | Sort-Object # To show scopes
-            $domain_mg = Get-MgDomain | Where-object IsDefault -eq $True | Select-object -ExpandProperty Id
+            #$domain_mg = Get-MgDomain | Where-object IsDefault -eq $True | Select-object -ExpandProperty Id
             if ($domain)
             { # we need it to be this domain
                 if ($domain -ne $domain_mg)

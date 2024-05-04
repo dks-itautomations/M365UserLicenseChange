@@ -3322,7 +3322,7 @@ Function LoadModule ($m, $providercheck = "", $checkver = $true) #nuget
             } # checkver
             Else
             { # not checkver
-                $strReturn+="v$($minfo[0].Version.ToString()) (online version not checked)"
+                $strReturn+="v$($minfo[0].Version.ToString()) (not checked for updates)"
             } # not checkver   
         } # ListAvailable
         else
