@@ -3274,21 +3274,21 @@ Function LoadModule ($m, $providercheck = "", $checkver = $true) #nuget
             { # found module online
                 if ($minfo[0].Version.ToString() -eq $mod_avail[0].Version.ToString())
                 {
-                    $strReturn+="GET v$($minfo[0].Version.ToString()) [Current version]"
+                    $strReturn+="v$($minfo[0].Version.ToString()) [Current version]"
                 }
                 else
                 {
-                    $strReturn+="GET v$($minfo[0].Version.ToString()) [Update available to v$($mod_avail[0].Version.ToString()) use Update-Module (as admin)]"
+                    $strReturn+="v$($minfo[0].Version.ToString()) [Update available to v$($mod_avail[0].Version.ToString()) use Update-Module (as admin)]"
                 }
             } # found module online
             else
             { # no found module online
-                $strReturn+="GET v$($minfo[0].Version.ToString()) (no online version found)"
+                $strReturn+="v$($minfo[0].Version.ToString()) (no online version found)"
             } # no found module online
         } # checkver
         Else
         { # not checkver
-            $strReturn+="GET v$($minfo[0].Version.ToString()) (online version not checked)"
+            $strReturn+="v$($minfo[0].Version.ToString()) (not checked for updates)"
         } # not checkver
     } # has Get-Module
     Else
@@ -3322,7 +3322,7 @@ Function LoadModule ($m, $providercheck = "", $checkver = $true) #nuget
             } # checkver
             Else
             { # not checkver
-                $strReturn+="GET v$($minfo[0].Version.ToString()) (online version not checked)"
+                $strReturn+="v$($minfo[0].Version.ToString()) (online version not checked)"
             } # not checkver   
         } # ListAvailable
         else
