@@ -19,6 +19,7 @@ Version History
 ConnectExchangeOnline
 ConnectMgGraph
 GroupChildren - Returns the children (users) of this group or role
+GroupInfo - returns info about a group (MembershipType)
 GroupParents - Returns the parents of this user (groups that this user is in)
 MgGroupCreate - Creates a group in Azure/Entra (if necessary)
 
@@ -30,6 +31,7 @@ Alphabetical list of functions
 ConnectExchangeOnline
 ConnectMgGraph
 GroupChildren - Returns the children (users) of this group or role
+GroupInfo - returns info about a group (MembershipType)
 GroupParents - Returns the parents of this user (groups that this user is in)
 MgGroupCreate - Creates a group in Azure/Entra (if necessary)
 -----------------------------------
@@ -110,7 +112,7 @@ Function ConnectMgGraph ($myscopes=$null, $domain=$null)
             } # is specific domain
             else
             { # didn't specify domain
-                Write-Host "Already connected to Microsoft Graph.  (Use Disconnect-MgGraph to change domains)"
+                Write-Host "Connected to Microsoft Graph.  (Use Disconnect-MgGraph to change domains)"
                 Write-Host "Domain :" -NoNewline
                 Write-Host $domain_mg -ForegroundColor Green
                 $conn_choice = AskForChoice -Message "Use this connection? (No=Disconnect and retry)" -choices @("&Yes","&No","&Abort")
@@ -118,7 +120,7 @@ Function ConnectMgGraph ($myscopes=$null, $domain=$null)
                 { # yes, use connection
                     $connected_ok=$true
                 }
-                If ($conn_choice -eq 2)
+                ElseIf ($conn_choice -eq 2)
                 { # abort
                     $connected_ok=$false
                     Break # break out of loop
@@ -166,6 +168,44 @@ Function GroupChildren ($DirectoryObjectId, $Recurse=$true)
         $MyObjects+=$myObject
     }
     Return $myObjects | Sort-Object mail
+}
+Function GroupInfo ($GroupNameOrEmail)
+{ # returns info about a group (MembershipType)
+    $objX = [PSCustomObject]@{
+        id             = $null
+        Name           = $null
+        Mail           = $null
+        Type           = $null
+        MailEnabled    = $null
+        MembershipType = $null
+    }
+    $group = Get-MgGroup -Filter "(mail eq '$($GroupNameOrEmail)') or (displayname eq '$($GroupNameOrEmail)')"
+    if ($group)
+    { # group ok           
+        $objX.id  = $group.Id
+        $objX.Name  = $group.DisplayName
+        $objX.Mail  = $group.Mail
+        $objX.MembershipType  = if ($group.GroupTypes -contains "DynamicMembership") {"Dynamic"} else {"Assigned"}
+        $objX.MailEnabled  = $group.MailEnabled
+        #
+        if ($group.GroupTypes -contains "Unified") {
+            $objX.Type = "Microsoft 365"
+        }
+        else {
+            if ($group.MailEnabled) {
+                if ($group.SecurityEnabled) {
+                    $objX.Type = "Security"
+                } # security enabled
+                else {
+                    $objX.Type = "Distribution"
+                } # not security enabled
+            } # mail enabled
+            else {
+                $objX.Type = "Security"
+            } # not mail enabled
+        } # not unified
+    } # group ok
+    Return $objX
 }
 Function GroupParents ($DirectoryObjectId)
 {
