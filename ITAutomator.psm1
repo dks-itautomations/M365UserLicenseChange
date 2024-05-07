@@ -68,6 +68,8 @@ If (-not(IsAdmin))
 
 <# 
 # Version History
+2024-05-06
+PressEnterToContinue
 2024-05-03
 Forked code into ITAutomator M365.psm1
 Updated MainFunctionHeader psm1 load line
@@ -282,7 +284,8 @@ NetMaskToCIDR
 ParseToken - Given a string with open and close delimeters (can be multi-char), returns the string in between those delimeters (the token).
 PathtoExe ($Exe)
 Pause ($Message="Press any key to continue.")
-PauseTimed 
+PauseTimed
+Function PressEnterToContinue
 PowershellVerStop ($minver)
 RegDel ($keymain, $keypath, $keyname)
 RegGet ($keymain, $keypath, $keyname)
@@ -486,6 +489,10 @@ Function PauseTimed ()
             }
         }
     }
+Function PressEnterToContinue
+{
+    Read-Host "Press <Enter> to continue"
+}
 Function GlobalsSave ($Globals, $scriptXML)
     {
     Export-Clixml -InputObject $Globals -Path $scriptXML
