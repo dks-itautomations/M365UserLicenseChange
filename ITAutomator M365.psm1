@@ -15,6 +15,8 @@ $psm1="$($scriptDir)\ITAutomator M365.psm1";if ((Test-Path $psm1)) {Import-Modul
 
 <#
 Version History
+2024-05-24
+ConnectMicrosoftTeams
 2024-05-06
 ConnectExchangeOnline
 ConnectMgGraph
@@ -28,7 +30,9 @@ MgGroupCreate
 
 Alphabetical list of functions
 -----------------------------------
+ConnectAzureAD (unfinished)
 ConnectExchangeOnline
+ConnectMicrosoftTeams
 ConnectMgGraph
 GroupChildren - Returns the children (users) of this group or role
 GroupInfo - returns info about a group (MembershipType)
@@ -36,21 +40,73 @@ GroupParents - Returns the parents of this user (groups that this user is in)
 MgGroupCreate - Creates a group in Azure/Entra (if necessary)
 -----------------------------------
 #>
-Function ConnectExchangeOnline ($domain=$null)
+Function ConnectAzureAD ($domain=$null)
 {
     do # connect loop
     {
         $connectedall_ok = $true
         ###############
-        Write-Host "Connect-ExchangeOnline" -ForegroundColor Yellow
+        Write-Host "Connect-AzureAD" -ForegroundColor Yellow
+        if ($PSVersionTable.PSVersion.Major -gt 5)
+        {
+            $connected_ok=$false
+            Write-Host "Connect-AzureAD only works in PowerShell 5 or lower (It is deprecated)."
+            PressEnterToContinue
+            Break
+        }
         # PressEnterToContinue
         # Load the module and show results
-        $module= "ExchangeOnlineManagement" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $false; Write-Host $lm_result
+        $module= "AzureAD" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $false; Write-Host $lm_result
+        $connected_ok=$false
+        # Check if connected
+        $conninfo = Get-AzContext
+        if ($conninfo) {
+            Write-Output "Already connected to Exchange Online. (Use Disconnect-ExchangeOnline to change domains)"
+            $connected_ok=$true
+        }
+        if (-not $connected_ok)
+        {Connect-AzureAD}
+        $domain_exch = Get-AcceptedDomain | Where-Object Default -eq $true| Select-object -ExpandProperty DomainName
+        Write-Host "Domain :" -NoNewline
+        Write-Host $domain_exch -ForegroundColor Green
+        if ($domain)
+        { # we need it to be this domain
+            if ($domain -ne $domain_exch)
+            {
+                Write-Host "Domains don't match. Using Disconnect-ExchangeOnline and trying again."
+                PressEnterToContinue
+                Disconnect-ExchangeOnline -Confirm:$false
+                Continue #start loop again
+            }
+        } # we need it to be this domain
+        ###############
+        if ($connectedall_ok)
+        {Break}
+    } while ($true) # connect loop
+    Return $connectedall_ok
+}
+Function ConnectExchangeOnline ($domain=$null, $checkver=$false)
+{
+    do # connect loop
+    {
+        $connectedall_ok = $true
+        ###############
+        Write-Host "Connect-ExchangeOnline " -ForegroundColor Yellow -NoNewline
+        if ($domain){
+            Write-Host "($($domain))"
+        }
+        else{Write-Host ""}
+        # PressEnterToContinue
+        # Load the module and show results
+        $module= "ExchangeOnlineManagement" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $checkver; Write-Host $lm_result
+        if ($lm_result.startswith("ERR")) {
+            Write-Host "ERR: Load-Module $($module) failed. Suggestion: Open PowerShell $($PSVersionTable.PSVersion.Major) as admin and run: Install-Module $($module)";PressEnterToContinue; Return $false
+        }
         $connected_ok=$false
         # Check if there are any Exchange Online sessions
         $exchangeSession = Get-ConnectionInformation
         if ($exchangeSession) {
-            Write-Output "Already connected to Exchange Online. (Use Disconnect-ExchangeOnline to change domains)"
+            Write-Host "Already connected to Exchange Online. (Use Disconnect-ExchangeOnline to change domains)"
             $connected_ok=$true
         }
         if (-not $connected_ok)
@@ -74,22 +130,87 @@ Function ConnectExchangeOnline ($domain=$null)
     } while ($true) # connect loop
     Return $connectedall_ok
 }
-Function ConnectMgGraph ($myscopes=$null, $domain=$null)
+Function ConnectMicrosoftTeams ($domain=$null, $checkver=$false)
+{
+    do # connect loop
+    {
+        $connectedall_ok = $true
+        ###############
+        Write-Host "Connect-MicrosoftTeams " -ForegroundColor Yellow -NoNewline
+        if ($domain){
+            Write-Host "($($domain))"
+        }
+        else{Write-Host ""}
+        # PressEnterToContinue
+        # Load the module and show results
+        $module= "MicrosoftTeams" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $checkver; Write-Host $lm_result
+        if ($lm_result.startswith("ERR")) {
+            Write-Host "ERR: Load-Module $($module) failed. Suggestion: Open PowerShell $($PSVersionTable.PSVersion.Major) as admin and run: Install-Module $($module)";PressEnterToContinue; Return $false
+        }
+        $connected_ok=$false
+        # Check if connected
+        $has_session = Get-CsTenant -ErrorAction ignore
+        if ($has_session) {
+            Write-Host "Already connected to MicrosoftTeams. (Use Disconnect-MicrosoftTeams to change domains)"
+            $connected_ok=$true
+        }
+        if (-not $connected_ok)
+        {Connect-MicrosoftTeams}
+        $domains = (Get-CsTenant -ErrorAction ignore  | Select-Object VerifiedDomains -ExpandProperty VerifiedDomains | Select-Object Name -ExpandProperty Name) -join ", "
+        Write-Host "Domains :" -NoNewline
+        Write-Host $domains -ForegroundColor Green
+        if ($domain)
+        { # we need it to be this domain
+            if ($domains -notmatch $domain)
+            {
+                Write-Host "Domains don't match. Using Disconnect-MicrosoftTeams and trying again."
+                PressEnterToContinue
+                Disconnect-MicrosoftTeams
+                Continue #start loop again
+            }
+        } # we need it to be this domain
+        ###############
+        if ($connectedall_ok)
+        {Break}
+    } while ($true) # connect loop
+    Return $connectedall_ok
+}
+Function ConnectMgGraph ($myscopes=$null, $domain=$null, $checkver=$false)
 {
     $junk = $null # collect throwaway output
     # Load the module and show results
-    $module= "Microsoft.Graph.Authentication" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $false; Write-Host $lm_result
+    $module= "Microsoft.Graph.Authentication" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $checkver; Write-Host $lm_result
+    if ($lm_result.startswith("ERR")) {
+        Write-Host "ERR: Load-Module $($module) failed. Suggestion: Open PowerShell $($PSVersionTable.PSVersion.Major) as admin and run: Install-Module $($module)";PressEnterToContinue; Return $false
+    }
+    $module= "Microsoft.Graph.Identity.DirectoryManagement" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $checkver; Write-Host $lm_result
+    if ($lm_result.startswith("ERR")) {
+        Write-Host "ERR: Load-Module $($module) failed. Suggestion: Open PowerShell $($PSVersionTable.PSVersion.Major) as admin and run: Install-Module $($module)";PressEnterToContinue; Return $false
+    }
     if (-not $myscopes)
     { # default scopes
         $myscopes=@()
         $myscopes+="User.Read.All"
     }
-    $count_declines=0
+    $count_attempts=0
     $connected_ok=$false
     do
     { # connect loop
         ###############
-        Write-Host "Connect-MgGraph" -ForegroundColor Yellow
+        $count_attempts+=1 # keep track of how many no answers
+        if ($count_attempts -gt 2)
+        { # max declines
+            If (-not (AskForChoice -Message "Keep Trying? (No=give up)"))
+            {
+                $connected_ok=$false
+                Break # break out of loop
+            }
+        } # max declines
+        Write-Host "Connect-MgGraph" -ForegroundColor Yellow -NoNewline
+        if ($domain){
+            Write-Host "($($domain))"
+        }
+        else{Write-Host ""}
         # Get-MgContext -ErrorAction SilentlyContinue
         # Get-MgContext | Select-object -expand Scopes | Sort-Object # To show scopes
         $junk = Connect-MgGraph -scopes $myscopes -NoWelcome
@@ -127,23 +248,13 @@ Function ConnectMgGraph ($myscopes=$null, $domain=$null)
                 }
                 Else # 1: No
                 { # don't use connection
-                    $count_declines+=1 # keep track of how many no answers
                     $junk = Disconnect-MgGraph
-                    if ($count_declines -gt 1)
-                    { # max declines
-                        If (-not (AskForChoice -Message "Keep Trying? (No=give up)"))
-                        {
-                            $connected_ok=$false
-                            Break # break out of loop
-                        }
-                    } # max declines
                 } # don't use connection
             } # didn't specify domain
         } # has connection
     } while (-not $connected_ok) # connect loop
     Return $connected_ok
 }
-
 Function GroupChildren ($DirectoryObjectId, $Recurse=$true)
 {
     # Returns the children (users) of this group or role
@@ -187,14 +298,14 @@ Function GroupInfo ($GroupNameOrEmail)
         $objX.Mail  = $group.Mail
         $objX.MembershipType  = if ($group.GroupTypes -contains "DynamicMembership") {"Dynamic"} else {"Assigned"}
         $objX.MailEnabled  = $group.MailEnabled
-        #
+        # types https://learn.microsoft.com/en-us/graph/api/resources/groups-overview?view=graph-rest-1.0&tabs=http
         if ($group.GroupTypes -contains "Unified") {
             $objX.Type = "Microsoft 365"
         }
         else {
             if ($group.MailEnabled) {
                 if ($group.SecurityEnabled) {
-                    $objX.Type = "Security"
+                    $objX.Type = "Mail-enabled security"
                 } # security enabled
                 else {
                     $objX.Type = "Distribution"
@@ -228,7 +339,6 @@ Function GroupParents ($DirectoryObjectId)
     }
     Return $myObjects | Sort-Object mail
 }
-
 Function MgGroupCreate ($groupname)
 {
     #MgGroupCreate - Creates a group in Azure/Entra (if necessary)
@@ -251,5 +361,38 @@ Function MgGroupCreate ($groupname)
     }
     Return $strReturn,$MgGroup[-1]
 }
-
+Function UserLicenseInfo ($UserId, $SkuLookup)
+    {
+    # SkuLookup is a table containing this orgs sku information
+    $LicenseData = Get-MgUserLicenseDetail -UserId $UserId -ErrorAction Ignore
+    $myObject = [PSCustomObject]@{
+        IsLicensed = $false
+        Count   = 0
+        Skus = ""
+        SkuDescriptions = ""
+    }
+    ForEach ($license in $LicenseData)
+    { # each method
+        # Write-Host $license.SkuPartNumber -ForegroundColor Green
+        ## add to object
+        $skuid = $license.SkuPartNumber
+        $myObject.Skus += ",$($skuid)"
+        $myObject.Count += 1
+        ### START: Look up sku info
+        $PriceInfo = $SkuLookup | Where-Object SkuPartNumber -eq $skuid
+        if ($null -eq $PriceInfo)
+        {
+            # Write-Warning "There's no price info for [$($skuid)] in O365AdminsPricing.csv (add sku to lookup)"
+        }
+        else 
+        {
+            $myObject.SkuDescriptions += ",$($PriceInfo.SkuDescription)"
+        }
+        ### END: Look up sku info
+    }# each
+    $myObject.IsLicensed = ($myObject.Count -ne 0)
+    $myObject.Skus=$myObject.Skus.trimStart(",")
+    $myObject.SkuDescriptions=$myObject.SkuDescriptions.trimStart(",")
+    Return $myObject | Sort-Object Skus
+}
 ########### End of File

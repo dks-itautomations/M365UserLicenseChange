@@ -2,21 +2,19 @@
 # ITAutomator.psm1 copyright(c) ITAutomator
 # https://www.itautomator.com
 # 
-# Library of useful functions for PowerShell Programmers.
-#
+# Library of useful functions for PowerShell Programmers
 ########################################################################
 
 ########################################################################
-<# 
+<###### Sample ps1 Code
 ####
 # Usage: 
 # To use these functions in your .ps1 file put this .psm1 in the same folder as your .ps1.
 # Then put this sample code at the top of your .ps1 and adjust as needed.
 ####
-
-##################################
+######################
 ### Parameters
-##################################
+######################
 Param 
 	( 
 	 [string] $mode = "manual" #auto       ## -mode auto (Proceed without user input for automation. use 'if ($mode -eq 'auto') {}' in code)
@@ -24,9 +22,9 @@ Param
     ,[switch] $sampleswparam  = $false     ## -sampleswparam (use 'if ($sampleswparam) {}' in code)
 	)
 
-##################################
+######################
 ### Functions
-##################################
+######################
 
 ######################
 ## Main Procedure
@@ -64,10 +62,41 @@ If (-not(IsAdmin))
     ErrorMsg -Fatal -ErrCode 101 -ErrMsg "This script requires Administrator priviledges, re-run with elevation (right-click and Run as Admin)"
 }
 #>
-########################################################################
-
-<# 
-# Version History
+<###### Version History
+2024-12-19
+GetArchitecture
+PNPUtiltoObject ($pnpcmd = "pnputil.exe /enum-drivers") 
+2024-12-18
+GetWhoisData now recognizes the need for eula in double-byte format
+2024-12-13
+PromptForString
+PressEnterToContinue prompt option
+AskForChoice ReturnString option
+2024-12-12
+AskForChoice ShowMenu option
+2024-12-08
+EncryptString Added KeyAsString to allow for string-based keys
+DecryptString Added KeyAsString
+2024-12-01
+CopyFileIfNeeded ($source, $target, $CompareByHashOrDate="hash")
+2024-11-29
+DownloadFileFromWeb
+DownloadFileFromGoogleDrive
+DownloadFileFromWebOrGoogleDrive
+2024-11-23
+LoadModule - Added suggestion if update is needed
+2024-11-20
+CopyFilesIfNeeded - added excludeFiles option
+2024-11-19
+CopyFilesIfNeeded - changed date compare to allow a few seconds of tolerance due to OneDrive
+GetHashOfFiles - changed date hash to only include mins (not secs) to help with OneDrive changing by a few secs. Doesn't help with :59 :00 edge cases
+2024-11-18
+CSVSettingsLoad - Returns a hashtable of settings from a CSV Settings name,value file
+CSVSettingsSave - Saves settings to CSV
+2024-11-17
+CopyFilesIfNeeded -deeply=$true - Added option to not recurse. Also fixed LiteralPath bug to allow filenames with [ chars
+2024-05-08
+LoadModule - Ask before installing
 2024-05-06
 PressEnterToContinue
 2024-05-03
@@ -213,11 +242,7 @@ CopyFilesIfNeeded ($source, $target,$CompareMethod = "hash")
 2016-05-22
 - Changed RegSet to create key if doesn't exist
 #>
-
-########################################################################
-
-<# 
-#### Alphabetical list of functions
+<###### Alphabetical list of functions
 Add-IntToIPv4Address
 AddToCommaSeparatedString
 AppNameVerb ($AppName, $VerbStartsWith)
@@ -238,16 +263,21 @@ ConvertIPv4ToInt
 ConvertIntToIPv4
 ConvertPSObjectToHashtable
 ContentsHaveChanged - Given an array of strings from 2 files, identifies if they match or not.
-CopyFileIfNeeded  ($source, $target)
+CopyFileIfNeeded ($source, $target, $CompareByHashOrDate="hash")
 CopyFilesIfNeeded ($source, $target,$CompareMethod = "hash", $delete_extra=$false)
 CreateLocalUser($username, $password, $desc, $computername, $GroupsList="Administrators")
 CreateShortcut -lnk_path $lnk_path -SourceExe $exe_path -exe_args $exe_args
 CropString - Given a string, crops it below the maxlen and appends ... marks if needed, to indicate cropping
+CSVSettingsLoad - Returns a hashtable of settings from a CSV Settings name,value file
+CSVSettingsSave - Saves settings to CSV
 DatedFileName ($Logfile)
 DecryptString ($StringToDecrypt, $Key)
 DecryptStringSecure ($StringToDecrypt)
 DiskFormat
 DiskPartitions
+DownloadFileFromWeb
+DownloadFileFromGoogleDrive
+DownloadFileFromWebOrGoogleDrive
 Elevate -  Relaunches powershell.exe elevated
 EncryptString ($StringToEncrypt, $Key)
 EncryptStringSecure ($StringToEncrypt)
@@ -258,6 +288,7 @@ FolderCreate -Logfolder "C:\LogFolder"
 FolderDelete
 FolderSize $source
 FromUnixTime 
+GetArchitecture
 Get-CredentialInFile
 Get-FileMetaData
 Get-FileMetaData2
@@ -285,8 +316,10 @@ ParseToken - Given a string with open and close delimeters (can be multi-char), 
 PathtoExe ($Exe)
 Pause ($Message="Press any key to continue.")
 PauseTimed
-Function PressEnterToContinue
+PNPUtiltoObject ($pnpcmd = "pnputil.exe /enum-drivers") 
+PressEnterToContinue
 PowershellVerStop ($minver)
+PromptForString
 RegDel ($keymain, $keypath, $keyname)
 RegGet ($keymain, $keypath, $keyname)
 RegGetX ($keymain, $keypath, $keyname)
@@ -365,7 +398,7 @@ Function GetHashOfFiles ($FilePaths, $ByDateOrByContents="ByContents")
             # create object for results
             $entry_obj=[pscustomobject][ordered]@{
                 Name          = $Filethis.Name
-                LastWriteTime = $Filethis.LastWriteTime.ToUniversalTime().Tostring('yyyy-MM-dd hh:mm:ss')
+                LastWriteTime = $Filethis.LastWriteTime.ToUniversalTime().Tostring('yyyy-MM-dd HH:mm') # was yyyy-MM-dd hh:mm:ss but OneDrive changes ss by 1 as files are copied in out of OneDrive - also hh was 12 not 24
                 Length        = $Filethis.Length
                 HashType      = $ByDateOrByContents
                 Hash          = ""
@@ -489,9 +522,9 @@ Function PauseTimed ()
             }
         }
     }
-Function PressEnterToContinue
+Function PressEnterToContinue ($Prompt = "Press <Enter> to continue")
 {
-    Read-Host "Press <Enter> to continue"
+    Read-Host $Prompt | Out-Null
 }
 Function GlobalsSave ($Globals, $scriptXML)
     {
@@ -693,14 +726,23 @@ Function CreateLocalUser($username, $password, $desc, $computername, $GroupsList
 			}
         }
     }
-Function EncryptString ($StringToEncrypt, $Key)
+Function EncryptString ($StringToEncrypt, $Key = $null, $KeyAsString = "")
     {
-    if (-not ($Key)) ## default to a simple key
-        {
-        [Byte[]] $key = (1..16)
-        }
     $EncryptedSS = ConvertTo-SecureString -AsPlainText -Force -String $StringToEncrypt
-    $Encrypted = ConvertFrom-SecureString -key $key -SecureString $EncryptedSS
+    if ($KeyAsString -eq "") {
+        if (-not ($Key)) { ## default to a simple key
+            [Byte[]] $Key = (1..16)
+        }
+    } # no KeyAsString
+    else {  # KeyAsString
+        # Input string (could be any length), convert the string to bytes and hash it using SHA256
+        $longkey = [System.Text.Encoding]::UTF8.GetBytes($KeyAsString)
+        $hashedKey = (New-Object System.Security.Cryptography.SHA256Managed).ComputeHash($longkey)
+        # Use the first 16, 24, or 32 bytes, depending on the encryption requirements
+        # Use the first 32 bytes for a 256-bit key
+        $Key = $hashedKey[0..31]
+    } # KeyAsString
+    $Encrypted = ConvertFrom-SecureString -key $Key -SecureString $EncryptedSS
     return $Encrypted
 }
 Function EncryptStringSecure ($StringToEncrypt)
@@ -709,17 +751,25 @@ Function EncryptStringSecure ($StringToEncrypt)
     $Encrypted = ConvertFrom-SecureString -SecureString $EncryptedSS
     return $Encrypted
 }
-Function DecryptString ($StringToDecrypt, $Key)
-    {
-    if (-not ($Key)) ## default to a simple key
-        {
-        [Byte[]] $key = (1..16)
+Function DecryptString ($StringToDecrypt, $Key = $null, $KeyAsString = "")
+{
+    if ($KeyAsString -eq "") {
+        if (-not ($Key)) { ## default to a simple key
+            [Byte[]] $Key = (1..16)
         }
+    } # no KeyAsString
+    else {  # KeyAsString
+        # Input string (could be any length), convert the string to bytes and hash it using SHA256
+        $longkey = [System.Text.Encoding]::UTF8.GetBytes($KeyAsString)
+        $hashedKey = (New-Object System.Security.Cryptography.SHA256Managed).ComputeHash($longkey)
+        # Use the first 16, 24, or 32 bytes, depending on the encryption requirements
+        # Use the first 32 bytes for a 256-bit key
+        $Key = $hashedKey[0..31]
+    } # KeyAsString
     $StringToDecryptSS= ConvertTo-SecureString -Key $key -String $StringToDecrypt
     $Decrypted=(New-Object System.Management.Automation.PSCredential 'N/A', $StringToDecryptSS).GetNetworkCredential().Password
     return $Decrypted
 }
-
 Function DecryptStringSecure ($StringToDecrypt)
     {
     $StringToDecryptSS= ConvertTo-SecureString -String $StringToDecrypt
@@ -1830,6 +1880,24 @@ Function VarExists
 	    $false
     }
 }
+function PromptForString ($Prompt = "Enter your choice", $defaultValue = "")
+{
+    if ([string]::IsNullOrWhiteSpace($defaultValue)) {
+    }
+    else {
+        $defaultPrompt = "Press Enter for default: "
+        $defaultPrompt = $defaultPrompt.PadLeft($Prompt.Length +2, ' ')  # Line up the 2 prompts
+        Write-Host $defaultPrompt -NoNewline
+        Write-Host $defaultValue -ForegroundColor Yellow
+        $Prompt = $Prompt.PadLeft($defaultPrompt.Length - 2, ' ') # Line up the 2 prompts
+    }
+    $userInput = Read-Host -Prompt $Prompt
+    # Use the default value if the user presses Enter without typing anything
+    if ([string]::IsNullOrWhiteSpace($userInput)) {
+        $userInput = $defaultValue
+    }
+    Return $userInput
+}
 Function AskForChoice
 {
     ### Presents a list of choices to user
@@ -1839,27 +1907,49 @@ Function AskForChoice
     # Choosedefault doesn't stop to ask anything - just displays choice made
     ###
     <# Sample code
-    # Show a menu of choices
-    $msg= "Select an Action"
-    $actionchoices = @("&Select cert","&Delete cert","Back to &Cert Menu")
-    $action=AskForChoice -message $msg -choices $actionchoices -defaultChoice 0
-    Write-Host "Action : $($actionchoices[$action].Replace('&',''))"
-    if ($action -eq 1)
-    { Write-host "Delete" }
-    # Show Continue? and Exit
-    if ((AskForChoice) -eq 0) {Write-Host "Aborting";Start-Sleep -Seconds 3; exit}
-    # Kind of like Pause but with a custom key and msg
-    $x=AskForChoice -message "All Done" -choices @("&Done") -defaultChoice 0
+    $choices = "E&xit","&List","&Export","&Open"
+    $choicen = AskForChoice "Choice:" -Choices ($choices) -DefaultChoice 0 -ShowMenu -ReturnString
+    if ($choice -eq "Exit")
+    { # Exit
+        Exit
+    }
+    # Kind of like Pause or PressEnterToContinue but with a custom key and msg
+    $x = AskForChoice -message "All Done" -choices @("&Done") -defaultChoice 0
     #>
-    Param($Message="Continue?", $Choices=$null, $DefaultChoice=0, [Switch]$ChooseDefault=$false)
+    Param( $Message="Continue?"
+        , $Choices=$null                  # an array of strings (choices)
+        , $DefaultChoice = 0              # default to 1st entry
+        , [Switch] $ChooseDefault=$false  # Don't prompt user, just pick the default
+        , [Switch] $ShowMenu=$false       # Show a multi-line menu
+        , [Switch] $ReturnString=$false)  # Return the string (instead of 0-n)
     $yesno=$false
     if (-not $Choices)
     {
         $Choices=@("&Yes","&No")
         $yesno=$true # We really want No to be 0, but 0 is always the first element (Yes)
     }
-    ## If ISE, show prompt, since it's hidden from host, or if it wasn't shown by choosedefault
-    If (($Host.Name -ne "ConsoleHost") -or ($ChooseDefault))
+    If ($ShowMenu)
+    { # ShowMenu
+        Write-Host "$($message)" 
+        Write-Host "".PadLeft($Message.Length, '-') # -----------
+        For ($i = 0; $i -lt $Choices.Count; $i++)
+        {
+            if ($Choices[$i].Contains("&")) {
+                $bracketchar = $Choices[$i].Split("&")[1][0] # My&Choice becomes C
+            }
+            else {
+                $bracketchar = ""
+            }
+            $line = "[$($bracketchar)] "
+            $line += $Choices[$i].Replace('&','')
+            If ($i -eq $DefaultChoice) {
+                $line += " (Default)"
+            }
+            Write-Host $line
+        }
+    } # ShowMenu
+    ## show prompt text: if ISE since it's hidden from text output, or if choosedefault was selected
+    If (($Host.Name -eq "Windows PowerShell ISE Host") -or ($ChooseDefault))
     {
         Write-Host "$($message) (" -NoNewline
         For ($i = 0; $i -lt $Choices.Count; $i++)
@@ -1890,7 +1980,12 @@ Function AskForChoice
     {
         If ($choice -eq 0) {$choice=1} else {$choice=0}
     }
-    Return $choice
+    if ($ReturnString) {
+        Return $choices[$choice].Replace("&","")
+    }
+    else {
+        Return $choice
+    }
     ###
 }
 Function ArrayRemoveDupes {
@@ -2395,140 +2490,43 @@ Function GetTempFolder (
     New-Item -Type Directory -Path $tempFolderPath | Out-Null
     Return $tempFolderPath
 }
-Function CopyFileIfNeeded ($source, $target)
-# Copies a source file to a target 
-# Only copies files that need copying (based on hash)
-# Returns a list of files with status of each (an array of strings)
-# Usage: 
-#        $retcode, $retmsg= CopyFileIfNeeded $src $trg
-#        $retmsg | Write-Host
-
+Function CopyFileIfNeeded ($source, $target, $CompareByHashOrDate="hash", $TargetIsFolder = $false)
+# Copies a source file to a target file or folder
 {
+    # Only copies files that need copying (based on hash)
+    # Returns status of copy
+    # Usage: 
+    #        $retcode, $retmsg= CopyFileIfNeeded $src $trg
+    #        $retmsg | Write-Host
     $retcode=0 # 0 no files needed copying, 10 files needed copying but OK, 20 Error copying files
     $retmsg=@()
-    ##
-
-    if (-not (Test-Path $source -PathType Leaf))
-    {
+    if (-not (Test-Path -LiteralPath $source -PathType Leaf))
+    { # no source file
         $retcode=20
         $retmsg+="ERR:20 Couldn't find source file '$($source)'"
     }
-    
-    if (-not (Test-Path $target -PathType Container))
-    {
-        $retcode=20
-        $retmsg+="ERR:20 Couldn't find target folder '$($target)'"
-    }
-    else
-    { # Target folder exists
-        $retcode=0 #Assume OK
-        $target_path = Join-Path $target (Split-Path $source -Leaf)
-        if (Test-Path $target_path -PathType Leaf)
-        { # File exists on both sides
-            $source_check=Get-FileHash $source
-            $target_check=Get-FileHash $target_path
-            if ($source_check.Hash -eq $target_check.Hash)
-            {
-                $files_same=$true
+    else 
+    { # has source file
+        if (Test-Path -LiteralPath $target -PathType Leaf)
+        { # target was passed as a file path (filename might be different)
+            If ($TargetIsFolder) {
+                $retcode=20
+                $retmsg+="ERR:21 There is a conflict. Target is a file, but TargetIsFolder True expects a folder: $($target)"
             }
-            else
-            {
-                $files_same=$false
-                $copy_reason="Updated"
+        }
+        if ($retcode -eq 0)
+        { # no target error
+            If ($TargetIsFolder) { # target is a folder (might not even exist yet) so use the source filename
+                $target_path = Join-Path $target (Split-Path $source -Leaf)
             }
-        } # File exists on both sides
-        else
-        { # No Target file (or folder)
-            $files_same=$false
-            $copy_reason="Missing"
-        } # No Target file (or folder)
-        #########
-        if ($files_same)
-        { #files_same!
-            $retmsg+= "OK:00 $($source) [already same file]"
-        } #files_same!
-        else
-        { #not files_same
-            New-Item -Type Dir (Split-Path $target_path -Parent) -Force |Out-Null #create folder if needed
-            Copy-Item $source -destination $target_path -Force
-            $retmsg+= "CP:10 $($source) [$($copy_reason)]"
-            if ($retcode -eq 0) {$retcode=10} #adjust return
-        } #not files_same
-        
-    } # Target folder exists
-    Return $retcode, $retmsg
-}
-Function CopyFilesIfNeeded ($source, $target,$CompareMethod = "hash", $delete_extra=$false)
-# Copies the contents of a source folder into a target folder (which must exist)
-# Only copies files that need copying, based on date or hash of contents.
-# Source can be a directory, a file, or a file spec.
-# Target must be a directory (will be created if missing)
-# 
-<# Usage:
-    $src = "C:\Downloads\src"
-    $trg = "C:\Downloads\trg"
-    $retcode, $retmsg= CopyFilesIfNeeded $src $trg "date"
-    $retmsg | Write-Host
-    Write-Host "Return code: $($retcode)"
-#>
-#
-# $comparemethod
-# hash : based on hash (hash computation my take a long time for large files)
-# date : based on date,size
-#
-# $retcode
-# 0    : No files copied
-# 10   : Some files copied
-#
-# $delete_extra
-# false : extra files in target are left alone
-# true  : extra files in target are deleted. resulting empty folders also deleted. Careful with this.
-#
-# $retmsg
-# Returns a list of files with status of each (an array of strings)
-#
-{
-    $retcode=0 # 0 no files needed copying, 10 files needed copying but OK, 20 Error copying files
-    $retmsg=@()
-    ##
-    
-    if (Test-Path $target -PathType Leaf)
-    {
-        $retcode=20
-        $retmsg+="ERR:20 Couldn't find target '$($target)'"
-    }
-    else
-    { # Target folder exists
-        # Figure out what the 'root' of the source is
-        if (Test-Path $source -PathType Container) #C:\Source (a folder)
-        {
-            $soureroot = $source
-        }
-        else # C:\Source\*.txt  (a wildcard)
-        {
-            $soureroot = Split-Path $source -Parent
-        }
-
-        $retcode=0 #Assume OK
-        $Files = Get-ChildItem $source -File -Recurse
-        ForEach ($File in $Files)
-        { # Each file
-            $files_same=$false
-            #############
-            #$source
-            #C:\Source\MSOffice Templates\MS Office Templates\Office2016_Themes
-            #$file.FullName
-            #C:\Source\MSOffice Templates\MS Office Templates\Office2016_Themes\MyTheme.thmx
-            #$target
-            #C:\Target\Microsoft\Templates\Document Themes
-            #$target_path
-            #C:\Target\Microsoft\Templates\Document Themes\MyTheme.thmx
-            #
-            $target_path = $file.FullName.Replace($soureroot,$target)
-            if (Test-Path $target_path -PathType Leaf)
+            else { # target is apath
+                $target_path = $target
+            }
+            # check target
+            if (Test-Path -LiteralPath $target_path -PathType Leaf)
             { # File exists on both sides
-                Write-Verbose "$($file.name) Bytes: $($file.length)"
-                if ($CompareMethod -eq "hash")
+                $File = Get-ChildItem -LiteralPath $source -File
+                if ($CompareByHashOrDate -eq "hash")
                 { #compare by hash
                     $source_check=Get-FileHash $File.FullName
                     $target_check=Get-FileHash $target_path
@@ -2536,10 +2534,10 @@ Function CopyFilesIfNeeded ($source, $target,$CompareMethod = "hash", $delete_ex
                 } #compare by hash
                 else
                 { #compare by date,size
-                    $target_file = Get-ChildItem -File $target_path
-                    $compareresult = ($File.Name -eq $target_file.Name) `
-                     -and ($File.Length -eq $target_file.Length) `
-                     -and ($File.LastWriteTimeUtc -eq $target_file.LastWriteTimeUtc)
+                    $tolerance_secs = 3 # allow for a few seconds of date diff due to OneDrive
+                    $target_file = Get-ChildItem -LiteralPath $target_path -File
+                    $compareresult = ($File.Length -eq $target_file.Length) `
+                    -and ([Math]::Abs(($File.LastWriteTimeUtc - $target_file.LastWriteTimeUtc).TotalSeconds) -lt $tolerance_secs)
                 } #compare by date,size
                 if ($compareresult)
                 {
@@ -2559,30 +2557,188 @@ Function CopyFilesIfNeeded ($source, $target,$CompareMethod = "hash", $delete_ex
             #########
             if ($files_same)
             { #files_same!
-                $retmsg+= "OK:00 $($file.FullName.Replace($source,'')) [already same file]"
+                $retmsg+= "OK:00 $($source) [already same file]"
             } #files_same!
             else
             { #not files_same
-                New-Item -Type Dir (Split-Path $target_path -Parent) -Force |Out-Null #create folder if needed
-                Copy-Item $File.FullName -destination $target_path -Force
-                $retmsg+= "CP:10 $($file.FullName.Replace($source,'')) [$($copy_reason)]"
-                if ($retcode -eq 0) {$retcode=10} #adjust return
+                New-Item -Type Dir (Split-Path $target_path -Parent) -Force | Out-Null #create folder if needed
+                $result = Copy-Item -LiteralPath $source -destination $target_path -Force -PassThru
+                if (-not($result)) {
+                    $retmsg+= "CP:90 $($source) [$($copy_reason) but copy failed]"
+                    if ($retcode -eq 0) {$retcode=90} #adjust return
+                }
+                Else {
+                    $retmsg+= "CP:10 $($source) [$($copy_reason)]"
+                    if ($retcode -eq 0) {$retcode=10} #adjust return
+                }
+            } #not files_same
+        } # no target error
+    } # has source file
+    Return $retcode, $retmsg
+}
+Function CopyFilesIfNeeded ($source, $target,$CompareMethod="hash", $delete_extra=$false, $deeply=$true, $excludeFiles=@())
+# Copies the contents of a source folder into a target folder (which must exist)
+{
+    # Only copies files that need copying, based on date or hash of contents.
+    # Source can be a directory, a file, or a file spec.
+    # Target must be a directory (will be created if missing)
+    <# Usage:
+        $src = "C:\Downloads\src"
+        $trg = "C:\Downloads\trg"
+        $retcode, $retmsg= CopyFilesIfNeeded $src $trg -CompareMethod "date"
+        $retmsg | Write-Host
+        Write-Host "Return code: $($retcode)"
+    #>
+    # $comparemethod
+    # hash : based on hash (hash computation my take a long time for large files)
+    # date : based on date,size
+    #
+    # $retcode
+    # 0    : No files copied
+    # 10   : Some files copied
+    # 90   : Some files failed
+    #
+    # $delete_extra
+    # false : extra files in target are left alone (default)
+    # true  : extra files in target are deleted. resulting empty folders also deleted. Careful with this.
+    #
+    # $deeply
+    # true  : subdirs are included (default)
+    # false : no subdirs are traversed
+    #
+    # $retmsg
+    # Returns a list of files with status of each (an array of strings)
+    #
+    $retcode=0 # 0 no files needed copying, 10 files needed copying but OK, 20 Error copying files
+    $retmsg=@()
+    ##
+    
+    if (Test-Path -LiteralPath $target -PathType Leaf)
+    {
+        $retcode=20
+        $retmsg+="ERR:20 Couldn't find target '$($target)'"
+    }
+    else
+    { # Target folder exists
+        # Figure out what the 'root' of the source is
+        if (Test-Path -LiteralPath $source -PathType Container) #C:\Source (a folder)
+        {
+            $sourceroot = $source
+        }
+        else # C:\Source\*.txt  (a wildcard)
+        {
+            $sourceroot = Split-Path $source -Parent
+        }
+
+        $retcode=0 #Assume OK
+        if ($deeply){
+            $Files = Get-ChildItem -LiteralPath $source -File -Recurse
+        }
+        else {
+            $Files = Get-ChildItem -LiteralPath $source -File
+        }
+        if ($null -ne $excludeFiles)
+        { # exclude?
+            if ($excludeFiles -is [string]){ # force it to be an array of strings
+                $excludeFiles = @($excludeFiles)
+            }
+            If ($excludeFiles.Count -gt 0){
+                $Files = $Files  | Where-Object {-not ($excludeFiles -contains $_.Name)}
+            }
+        } # exclude?
+        ForEach ($File in $Files)
+        { # Each file
+            $files_same=$false
+            #############
+            #$source
+            #C:\Source\MSOffice Templates\MS Office Templates\Office2016_Themes
+            #$file.FullName
+            #C:\Source\MSOffice Templates\MS Office Templates\Office2016_Themes\MyTheme.thmx
+            #$target
+            #C:\Target\Microsoft\Templates\Document Themes
+            #$target_path
+            #C:\Target\Microsoft\Templates\Document Themes\MyTheme.thmx
+            #
+            $target_path = $file.FullName.Replace($sourceroot,$target)
+            if (Test-Path -LiteralPath $target_path -PathType Leaf)
+            { # File exists on both sides
+                Write-Verbose "$($file.name) Bytes: $($file.length)"
+                if ($CompareMethod -eq "hash")
+                { #compare by hash
+                    $source_check=Get-FileHash $File.FullName
+                    $target_check=Get-FileHash $target_path
+                    $compareresult = ($source_check.Hash -eq $target_check.Hash)
+                } #compare by hash
+                else
+                { #compare by date,size
+                    $tolerance_secs = 3 # allow for a few seconds of date diff due to OneDrive
+                    $target_file = Get-ChildItem -LiteralPath $target_path -File
+                    $compareresult = ($File.Name -eq $target_file.Name) `
+                     -and ($File.Length -eq $target_file.Length) `
+                     -and ([Math]::Abs(($File.LastWriteTimeUtc - $target_file.LastWriteTimeUtc).TotalSeconds) -lt $tolerance_secs)
+                } #compare by date,size
+                if ($compareresult)
+                {
+                    $files_same=$true
+                }
+                else
+                {
+                    $files_same=$false
+                    $copy_reason="Updated"
+                }
+            } # File exists on both sides
+            else
+            { # No Target file (or folder)
+                $files_same=$false
+                $copy_reason="Missing"
+            } # No Target file (or folder)
+            #########
+            if ($files_same)
+            { #files_same!
+                $retmsg+= "OK:00 $($file.FullName.Replace($sourceroot,'')) [already same file]"
+            } #files_same!
+            else
+            { #not files_same
+                New-Item -Type Dir (Split-Path $target_path -Parent) -Force | Out-Null #create folder if needed
+                $result = Copy-Item -LiteralPath $File.FullName -destination $target_path -Force -PassThru
+                if (-not($result)) {
+                    $retmsg+= "CP:90 $($file.FullName.Replace($sourceroot,'')) [$($copy_reason) but copy failed]"
+                    if ($retcode -eq 0) {$retcode=90} #adjust return
+                }
+                Else {
+                    $retmsg+= "CP:10 $($file.FullName.Replace($sourceroot,'')) [$($copy_reason)]"
+                    if ($retcode -eq 0) {$retcode=10} #adjust return
+                }
             } #not files_same
         } # Each file
         if ($delete_extra)
         { # Delete extra files from target
             #$retcode=0 #Assume OK
-            $Files = Get-ChildItem $target -File -Recurse
+            if ($deeply){
+                $Files = Get-ChildItem -LiteralPath $target -File -Recurse
+            }
+            else {
+                $Files = Get-ChildItem -LiteralPath $target -File
+            }
+            if ($null -ne $excludeFiles)
+            { # exclude?
+                if ($excludeFiles -is [string]){ # force it to be an array of strings
+                    $excludeFiles = @($excludeFiles)
+                }
+                If ($excludeFiles.Count -gt 0){
+                    $Files = $Files  | Where-Object {-not ($excludeFiles -contains $_.Name)}
+                }
+            } # exclude?
             ForEach ($File in $Files)
             { # Each file in target
                 $source_path = $file.FullName.Replace($target,$source)
-                if (-not(Test-Path $source_path -PathType Leaf))
+                if (-not(Test-Path -LiteralPath $source_path -PathType Leaf))
                 { # No Source file, delete target
-                    Remove-Item $File.FullName -Force | Out-Null
+                    Remove-Item -LiteralPath $File.FullName -Force | Out-Null
                     $retmsg+= "DL:20 $($file.FullName.Replace($target,'')) [extra file removed]"
                     if (($file.DirectoryName -ne $target) -and (-not (Test-Path -Path "$($file.DirectoryName)\*")))
                     { # is parent an empty folder, remove it
-                        Remove-Item $File.DirectoryName -Force | Out-Null
+                        Remove-Item -LiteralPath $File.DirectoryName -Force | Out-Null
                         $retmsg+= "DL:30 $($file.DirectoryName.Replace($target,'')) [empty folder removed]"
                     }
                 } # No Source file, delete target
@@ -3236,146 +3392,6 @@ Function FolderDelete {
         Write-Warning "Remove-ItemAlternative - Path $Path doesn't exists. Skipping. "
     }
 }
-Function LoadModule ($m, $providercheck = "", $checkver = $true) #nuget
-{
-    <# Example:
-    # Load the module and show results
-    $module= "ExchangeOnlineManagement" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module ; Write-Host $lm_result
-    # Misc commands
-    Get-Module $module #shows modules available in this powershell session
-    Get-InstalledModule $module | Format-List Name,Version,InstalledLocation #shows installed modules available on this machine
-    Import-Module $module #brings module commands into powershell session (whatever module is installed on this machine)
-    Remove-Module $module #removes module from this powershell session (doesn't uninstall module)
-    # To Install/Update/Uninstall
-    Get-InstalledModule $module | Format-List Name,Version,InstalledLocation #shows installed modules available on this machine
-    Find-Module $module #Shows what is available online
-    Install-Module -Name $module (run as admin)
-    Install-Module -Name $module -RequiredVersion <PreviewVersion>  (run as admin)
-    Install-Module -Name $module -AllowClobber -AllowPrerelease -SkipPublisherCheck (run as admin)
-    Update-Module -Name $module #updates to latest (run as admin)
-    Uninstall-Module -Name $module #Uninstalls module on this machine (run as admin)
-    #>
-    $strReturn = @()
-    $bErr=$false
-    If ($providercheck -ne "")
-    { #install provider if needed
-        write-verbose "Checking for PackageProvider $($providercheck)..."
-        $prv = Get-PackageProvider|where-object{$_.name -eq $providercheck}
-        if (-not $prv)
-        {
-            Install-PackageProvider -Name $providercheck -Force
-            $strReturn +="(PackageProvider $($providercheck) installed)"
-        }
-    } #install provider if needed
-    write-verbose "Checking for Module $m..."
-    # If module is imported say that and do nothing
-    $minfo = @(Get-Module | Where-Object {$_.Name -eq $m})
-    If ($minfo)
-    { # has Get-Module
-        write-verbose "Module $m is already imported."
-        # see what the latest version online is
-        if ($checkver)
-        { # checkver
-            $mod_avail = Find-Module -Name $m -ErrorAction SilentlyContinue
-            if ($mod_avail)
-            { # found module online
-                if ($minfo[0].Version.ToString() -eq $mod_avail[0].Version.ToString())
-                {
-                    $strReturn+="v$($minfo[0].Version.ToString()) [Current version]"
-                }
-                else
-                {
-                    $strReturn+="v$($minfo[0].Version.ToString()) [Update available to v$($mod_avail[0].Version.ToString()) use Update-Module (as admin)]"
-                }
-            } # found module online
-            else
-            { # no found module online
-                $strReturn+="v$($minfo[0].Version.ToString()) (no online version found)"
-            } # no found module online
-        } # checkver
-        Else
-        { # not checkver
-            $strReturn+="v$($minfo[0].Version.ToString()) (not checked for updates)"
-        } # not checkver
-    } # has Get-Module
-    Else
-    { # no Get-Module
-        # If module is not imported, but available on disk then import
-        $minfo = @(Get-Module -ListAvailable -Name $m| Where-Object {$_.Name -eq $m})
-        if ($minfo)
-        { # ListAvailable
-            write-verbose "Module $m is available on disk, importing..."
-            Import-Module $m
-            $strReturn+="Imported v$($minfo[0].Version.ToString())"
-            if ($checkver)
-            { # checkver
-                # see what the latest version online is
-                $mod_avail = Find-Module -Name $m -ErrorAction SilentlyContinue
-                if ($mod_avail)
-                {
-                    if ($minfo[0].Version.ToString() -eq $mod_avail[0].Version.ToString())
-                    {
-                        $strReturn+="Imported v$($minfo[0].Version.ToString()) [Current version]"
-                    }
-                    else
-                    {
-                        $strReturn+="Imported v$($minfo[0].Version.ToString()) [Update available to v$($mod_avail[0].Version.ToString()) use Update-Module (as admin)]"
-                    }
-                    }
-                else
-                {
-                    $strReturn+="Imported v$($minfo[0].Version.ToString())"
-                }
-            } # checkver
-            Else
-            { # not checkver
-                $strReturn+="v$($minfo[0].Version.ToString()) (not checked for updates)"
-            } # not checkver   
-        } # ListAvailable
-        else
-        { # No ListAvailable
-            if ($checkver)
-            { # checkver
-                if (Find-Module -Name $m -ErrorAction SilentlyContinue)
-                { # If module is not imported, not available on disk, but is in online gallery then install and import
-                    If (IsAdmin)
-                    { # admin
-                        write-verbose "Module $m is available online, downloading to disk (as admin to all users)..."
-                        Install-Module -Name $m -Force -Verbose -Scope AllUsers
-                    }
-                    Else
-                    { # no admin
-                        write-verbose "Module $m is available online, downloading to disk (not an admin so as user)..."
-                        Install-Module -Name $m -Force -Verbose -Scope CurrentUser
-                    }
-                    write-verbose "Module $m is available on disk, importing..."
-                    Import-Module $m
-                    $minfo = @(Get-Module -ListAvailable | Where-Object {$_.Name -eq $m})
-                    $strReturn+="INSTALL v$($minfo[0].Version.ToString())"
-                }
-                else 
-                { # If the module is not imported, not available and not in the online gallery then abort
-                    write-verbose "Module $m not imported, not available and not in an online gallery, exiting."
-                    $strReturn +="NOT_FOUND"
-                    $bErr=$true
-                }
-            } # checkver
-            Else
-            { # not checkver
-                $strReturn +="NOT_FOUND (online version not checked)"
-                $bErr=$true
-            } # not checkver
-        } # No ListAvailable
-    } # no Get-Module
-    if ($bErr)
-    {
-        Return "ERR: "+ ($strReturn -join ", ")
-    }
-    Else
-    {
-        Return "OK: "+ ($strReturn -join ", ")
-    }
-}
 Function ChooseFromList ($package_paths, $title="Choose", $showmenu=$true)
 {
     <### Examples
@@ -3601,7 +3617,9 @@ Function GetWhoisData ($domain, $cache_hrs = 5, $exename = "whois.exe", $whoisex
 				# Write-Host "DEBUG: $($domain) Error $($error[0].ToString())"
 			}
 			$ErrorActionPreference = $EAC #restore existing
-			if ($whoisexe_output -match "You must accept EULA")
+            $eula = "You must accept EULA"
+            $whoisexe_output_ascii = -join ($whoisexe_output.ToCharArray() | Where-Object { $_ -ne "`0" }) # utf8? eliminate blank bytes
+			if (($whoisexe_output -match $eula) -or ($whoisexe_output_ascii -match $eula))
 			{
 				Write-Host "Must accept EULA. Pausing 5s..." -ForegroundColor Green
 				Start-Sleep 5
@@ -3885,4 +3903,384 @@ Function Elevate
        Throw "Failed to start PowerShell elevated"
     }
 } # elevate
+Function LoadModule ($m, $providercheck = "", $checkver = $true) #nuget
+{
+    <#
+    Example:
+    # Load the module and show results
+    $module= "ExchangeOnlineManagement" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module ; Write-Host $lm_result
+    # Misc commands
+    Get-Module $module #shows modules available in this powershell session
+    Get-InstalledModule $module | Format-List Name,Version,InstalledLocation #shows installed modules available on this machine
+    Import-Module $module #brings module commands into powershell session (whatever module is installed on this machine)
+    Remove-Module $module #removes module from this powershell session (doesn't uninstall module)
+    # To Install/Update/Uninstall
+    Get-InstalledModule $module | Format-List Name,Version,InstalledLocation #shows installed modules available on this machine
+    Find-Module $module #Shows what is available online
+    Install-Module -Name $module (run as admin)
+    Install-Module -Name $module -RequiredVersion <PreviewVersion>  (run as admin)
+    Install-Module -Name $module -AllowClobber -AllowPrerelease -SkipPublisherCheck (run as admin)
+    Update-Module -Name $module #updates to latest (run as admin)
+    Uninstall-Module -Name $module #Uninstalls module on this machine (run as admin)
+    #>
+    $strReturn = @()
+    $bErr=$false
+    If ($providercheck -ne "")
+    { #install provider if needed
+        write-verbose "Checking for PackageProvider $($providercheck)..."
+        $prv = Get-PackageProvider|where-object{$_.name -eq $providercheck}
+        if (-not $prv)
+        {
+            Install-PackageProvider -Name $providercheck -Force
+            $strReturn +="(PackageProvider $($providercheck) installed)"
+        }
+    } #install provider if needed
+    write-verbose "Checking for Module $($m)..."
+    # If module is imported say that and do nothing
+    $minfo = @(Get-Module | Where-Object {$_.Name -eq $m})
+    If ($minfo)
+    { # has Get-Module
+        write-verbose "Module $($m) is already imported."
+        # see what the latest version online is
+        if ($checkver)
+        { # checkver
+            $mod_avail = Find-Module -Name $m -ErrorAction SilentlyContinue
+            if ($mod_avail) { # found module online
+                if ($minfo[0].Version.ToString() -eq $mod_avail[0].Version.ToString()) {
+                    $strReturn+="v$($minfo[0].Version.ToString()) [Current version]"
+                }
+                else {
+                    $strReturn+="v$($minfo[0].Version.ToString()) [Update available to v$($mod_avail[0].Version.ToString()). Suggestion: Open Powershell (as admin) and run Update-Module $($m)]"
+                }
+            } # found module online
+            else { # no found module online
+                $strReturn+="v$($minfo[0].Version.ToString()) (no online version found)"
+            } # no found module online
+        } # checkver
+        Else { # not checkver
+            $strReturn+="v$($minfo[0].Version.ToString()) (not checked for updates)"
+        } # not checkver
+    } # has Get-Module
+    Else
+    { # no Get-Module
+        # If module is not imported, but available on disk then import
+        $minfo = @(Get-Module -ListAvailable -Name $m| Where-Object {$_.Name -eq $m})
+        if ($minfo)
+        { # ListAvailable
+            write-verbose "Module $($m) is available on disk, importing..."
+            Import-Module $m
+            $strReturn+="Imported v$($minfo[0].Version.ToString())"
+            if ($checkver)
+            { # checkver
+                # see what the latest version online is
+                $mod_avail = Find-Module -Name $m -ErrorAction SilentlyContinue
+                if ($mod_avail)
+                {
+                    if ($minfo[0].Version.ToString() -eq $mod_avail[0].Version.ToString())
+                    {
+                        $strReturn+="Imported v$($minfo[0].Version.ToString()) [Current version]"
+                    }
+                    else
+                    {
+                        $strReturn+="Imported v$($minfo[0].Version.ToString()) [Update available to v$($mod_avail[0].Version.ToString()). Suggestion: Open Powershell (as admin) and run Update-Module $($m)]"
+                    }
+                }
+                else {
+                    $strReturn+="Imported v$($minfo[0].Version.ToString())"
+                }
+            } # checkver
+            Else { # not checkver
+                $strReturn+="v$($minfo[0].Version.ToString()) (not checked for updates)"
+            } # not checkver   
+        } # ListAvailable
+        else
+        { # No ListAvailable
+            if ($checkver)
+            { # checkver
+                if (Find-Module -Name $m -ErrorAction SilentlyContinue)
+                { # If module is not imported, not available on disk, but is in online gallery then install and import
+                    If (IsAdmin)
+                    { # admin
+                        $msg = "About to run Install-Module $($m). You are an admin, is that OK?"
+                        if (AskForChoice -Message $msg) {
+                            write-verbose "Module $($m) is available online, downloading to disk (as admin to all users)..."
+                            Install-Module -Name $m -Force -Scope AllUsers
+                        }
+                        else {
+                            write-verbose "Module $($m) not installed (user aborted)"
+                            $strReturn +="NOT_INSTALLED_ABORT"
+                            $bErr=$true
+                        }
+                    } # admin
+                    Else
+                    { # no admin
+                        $msg = "About to run Install-Module $($m). You are not an admin, is that OK? (not recommended)"
+                        if (AskForChoice -Message $msg) {
+                            write-verbose "Module $($m) is available online, downloading to disk (not an admin so as user)..."
+                            Install-Module -Name $m -Force -Verbose -Scope CurrentUser
+                        }
+                        else {
+                            write-verbose "Module $($m) not installed (user aborted)"
+                            $strReturn +="NOT_INSTALLED_ABORT"
+                            $bErr=$true
+                        }
+                    } # no admin
+                    if (-not $bErr) {
+                        write-verbose "Module $($m) is available on disk, importing..."
+                        Import-Module $m
+                        $minfo = @(Get-Module -ListAvailable | Where-Object {$_.Name -eq $m})
+                        $strReturn+="INSTALL v$($minfo[0].Version.ToString())"
+                    }
+                }
+                else 
+                { # If the module is not imported, not available and not in the online gallery then abort
+                    write-verbose "Module $($m) not imported, not available and not in an online gallery, exiting."
+                    $strReturn +="NOT_FOUND"
+                    $bErr=$true
+                }
+            } # checkver
+            Else
+            { # not checkver
+                $strReturn +="NOT_FOUND (online version not checked)"
+                $bErr=$true
+            } # not checkver
+        } # No ListAvailable
+    } # no Get-Module
+    if ($bErr) {
+        Return "ERR: "+ ($strReturn -join ", ")
+    }
+    Else {
+        Return "OK: "+ ($strReturn -join ", ")
+    }
+} # Load Module
+function CSVSettingsLoad ($csvFile="")
+{
+    # Returns a hashtable of settings from a CSV Settings file
+    # Usage: 
+    <# 
+    # Load settings
+    $csvFile = "$($scriptDir )\$($scriptBase) Settings.csv"
+    $settings = CSVSettingsLoad $csvFile
+    # Defaults
+    $settings_updated = $false
+    if ($null -eq $settings.Username) {$settings.Username = "MyName"; $settings_updated = $true}
+    if ($null -eq $settings.Fullname) {$settings.Fullname = "My Full Name"; $settings_updated = $true}
+    if ($settings_updated) {$retVal = CSVSettingsSave $settings $csvFile; Write-Host "Initialized - $($retVal)"}
+    # Use Settings
+    Write-Host "Username: $($settings.Username)"
+    Write-Host "Fullname: $($settings.Fullname)"
+    $settings.Fullname = "George Washington"
+    # Save Settings
+    $retVal = CSVSettingsSave $settings $csvFile
+    Write-Host $retVal
+    #>
+    $settings = @{} # empty hashtable
+    If (Test-Path $csvFile) {
+        $csvData = Import-Csv -Path $csvFile
+        # Hashtable from a CSV with Name,Value entries
+        foreach ($entry in $csvData) {$settings[$entry.Name] = $entry.Value}
+    }
+    else {
+        CSVSettingsSave $settings $csvFile | Out-Null
+    }
+    $settings
+}
+function CSVSettingsSave ($settings, $csvFile="")
+{
+    # Saves settings to CSV
+    # Usage: $retValue = CSVSettingsSave $settings $csvFile
+    $init_needed = $true
+    if ($settings){
+        if ($settings.GetType().Name -eq "Hashtable"){
+            if ($settings.Count -ne 0){
+                $init_needed = $false
+            }
+        }
+    }
+    if ($init_needed){
+        $settings["SettingsFileCreatedDate"] = Get-Date -format "yyyy-MM-dd"
+        $settings["SettingsFileCreatedBy"] = "$($env:computername)\$($env:username)"
+    }
+    # Convert to a PSCustomObject and export to a CSV file
+    $exportObject = $settings.GetEnumerator() | ForEach-Object {[PSCustomObject] @{Name=$_.Name;Value=$_.Value}}
+    try {
+        $exportObject | Sort-Object Name | Export-Csv -Path $csvFile
+        $retValue = "$($settings.count) settings saved to $(Split-Path $csvFile -Leaf)"
+    }
+    catch {
+        $retValue = "Problem saving $(Split-Path $csvFile -Leaf). (Is it open?)"
+    }
+    Return $retValue
+}
+
+function DownloadFileFromWeb {
+    param (
+        [string]$WebUrl = "https://download.workspot.com/WorkspotClientSetup64.msi" ,
+        [string]$filename = $null, #"WorkspotClientSetup64.msi",
+        [string]$hash          = $null, # (Get-FileHash "$TmpFld\$filename" -Algorithm SHA256).Hash
+        [boolean]$hideprogress = $false
+    )
+    $strInfo = ""
+    $intErr  = 0
+    if ($filename -eq "") {$filename = $null}
+    $TmpFld = GetTempFolder -Prefix "webdownload_"
+    Write-Host "- Creating temp folder: $(Split-Path $TmpFld -Leaf)"
+    if ($hideprogress) {
+        $Pp_old=$ProgressPreference;$ProgressPreference = 'SilentlyContinue' # Change from default (Continue). Prevents byte display in Invoke-WebRequest (speeds it up)
+    }
+    if (-not $filename){
+        $filename = Split-Path $WebUrl -Leaf
+    }
+    Write-Host "Downloading $($filename) ... " -NoNewline
+    $startTime = Get-Date
+    Invoke-WebRequest -Uri $WebUrl -OutFile "$TmpFld\$filename"
+    Write-Host "Done"
+    $endTime = Get-Date
+    $duration = $endTime - $startTime
+    Write-Host "Download took (hh:mm:ss): $($duration.ToString("hh\:mm\:ss"))"
+    if ($hideprogress) {
+        $ProgressPreference = $Pp_old
+    }
+    Write-Host "Downloaded: " -NoNewline
+    Write-Host $filename -ForegroundColor Green
+    # Check downloaded hash
+    if ($hash){
+        Write-Host "- Checking hash ... " -NoNewline
+        $hash_dl = (Get-FileHash "$TmpFld\$filename" -Algorithm SHA256).Hash
+        if ($hash_dl -ne $hash) {
+            $strInfo =  "Err 100: Hash downloaded [$($hash_dl)] didn't match."
+            $interr = 100
+            Write-Host $strInfo
+        }
+        else {Write-Host "OK" -ForegroundColor Green}
+    }
+    # Create and return a custom object
+    return [PSCustomObject]@{
+        intErr  = $interr
+        strFullpath = "$TmpFld\$filename"
+        strInfo = "Download took (hh:mm:ss): $($duration.ToString("hh\:mm\:ss"))"
+    }
+}
+function DownloadFileFromGoogleDrive {
+    param (
+        [string]$GoogleDriveUrl = "https://drive.google.com/file/d/xxxxxxxxxxx/view?usp=sharing"  ,
+        [string]$filename = $null, #"MyFile.zip",
+        [string]$hash           = $null, #(Get-FileHash "$TmpFld\$filename" -Algorithm SHA256).Hash
+        [boolean]$hideprogress  = $false
+    )
+    $strInfo = ""
+    $intErr  = 0
+    if ($filename -eq "") {$filename = $null}
+    # create temp folder
+    $TmpFld = GetTempFolder -Prefix "googledownload_"
+    Write-Host "- Creating temp folder: $(Split-Path $TmpFld -Leaf)"
+    if ($hideprogress) {
+        $Pp_old=$ProgressPreference;$ProgressPreference = 'SilentlyContinue' # Change from default (Continue). Prevents byte display in Invoke-WebRequest (speeds it up)
+    }
+    if (-not $filename)
+    { # need a filename
+        $htmlContent = Invoke-WebRequest -Uri $GoogleDriveUrl -UseBasicParsing -OutFile "$TmpFld\google.txt" -PassThru
+        $pattern = '<meta property="og:title" content="(.+?)">'
+        if ($htmlContent.RawContent -match $pattern) {
+            $filename = $matches[1] # Captured group 1 contains the uuid value
+        } else {
+            write-host "Err 103: Couldn't find '$($pattern)' in 'google.txt'. Using GoogleDownload.zip"
+            $filename = "GoogleDownload.zip"
+        }
+    } # need a filename
+    $FileID=$GoogleDriveUrl.split("/")[5]
+    Write-Host "Downloading $($filename) ... " -NoNewline
+    $startTime = Get-Date
+    Invoke-WebRequest -Uri "https://drive.usercontent.google.com/download?id=$($FileID)&export=download&confirm=t" -OutFile "$TmpFld\$filename"
+    Write-Host "Done"
+    $endTime = Get-Date
+    $duration = $endTime - $startTime
+    $strInfo = "Download took (hh:mm:ss): $($duration.ToString("hh\:mm\:ss"))"
+    Write-Host $strInfo
+    if ($hideprogress) {
+        $ProgressPreference = $Pp_old
+    }
+    Write-Host "Downloaded: " -NoNewline
+    Write-Host $filename -ForegroundColor Green
+    # Check downloaded hash
+    if ($hash){
+        Write-Host "- Checking hash ... " -NoNewline
+        $hash_dl = (Get-FileHash "$TmpFld\$filename" -Algorithm SHA256).Hash
+        if ($hash_dl -ne $hash) {
+            $strInfo =  "Err 100: Hash downloaded [$($hash_dl)] didn't match."
+            $interr = 100
+            Write-Host $strInfo
+        }
+        else {Write-Host "OK" -ForegroundColor Green}
+    }
+    # Create and return a custom object
+    return [PSCustomObject]@{
+        intErr  = $intErr
+        strFullpath = "$TmpFld\$filename"
+        strInfo = $strInfo
+    }
+}
+function DownloadFileFromWebOrGoogleDrive {
+    param (
+        [string]$Url = "https://drive.google.com/file/d/xxxxxxxxxxx/view?usp=sharing"  ,
+        [string]$Filename = $null, #"MyFile.zip",
+        [string]$hash           = $null, #(Get-FileHash "$TmpFld\$filename" -Algorithm SHA256).Hash
+        [boolean]$hideprogress  = $false
+    )
+
+    if ($Url -like "*drive.google.com*"){
+        $retVal =  DownloadFileFromGoogleDrive -GoogleDriveUrl $url -filename $Filename -hash $hash -hideprogress $false
+    }
+    else{
+        $retVal =  DownloadFileFromWeb -WebUrl $url -filename $Filename -hash $hash -hideprogress $false
+    }
+    $retVal
+}
+
+Function GetArchitecture
+{
+    $architecture = $ENV:PROCESSOR_ARCHITECTURE
+    switch ($architecture) {
+        "AMD64" { "x64" }
+        "ARM64" { "ARM64" }
+        "x86"   { "x86" }
+        default { "Unknown architecture: $architecture" }
+    }
+}
+Function PNPUtiltoObject($pnpcmd = "pnputil.exe /enum-drivers") 
+{ # PNPUtiltoObject
+    ### Converts the output of pnputil command into a powershell object
+    #$pnpcmd = "pnputil.exe /enum-drivers"
+    #$pnpcmd = "pnputil.exe -e"
+    $pnpout= Invoke-Expression $pnpcmd
+    $pnp_objs=@()
+    $cols=@()
+    foreach ($line in $pnpout)
+        { ## foreach line
+        if ($line -ne "Microsoft PnP Utility")
+            { #not file header
+            if (-not $line.Contains(":"))
+                {   #### line feed - save row
+                if ($cols)
+                    {$pnp_obj=@([pscustomobject][ordered]@{})
+                    foreach ($col in $cols) {
+                        $pnp_obj | Add-Member -MemberType NoteProperty -Name $col.Name -Value $col.Data
+                    }
+                    $pnp_objs += $pnp_obj
+                    }
+                $cols=@()
+                }   #### line feed - save row
+            else
+                {   #### collect this row's columns
+                $col_obj=@([pscustomobject][ordered]@{
+                    Name=$line.Substring(0,$line.Indexof(":")).Trim()
+                    Data=$line.Substring($line.Indexof(":")+1).Trim()
+                })
+                $cols+=$col_obj
+                }   #### collect this row's columns
+            } #not file header
+        } ## foreach line
+    $pnp_objs
+} # PNPUtiltoObject
+
 # END OF FILE
