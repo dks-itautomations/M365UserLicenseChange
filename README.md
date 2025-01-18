@@ -15,10 +15,10 @@ Or Go to GitHub [here](https://github.com/ITAutomator/M365UserLicenseChange) and
 
 In this example  
 
-- User1 licenses will be replaced with M365 E5
-- User2 licenses will be replaced with M365 Business Premium and Information Governance
-- User3 will have Information Governance added
-- User4 will have Information Governance added
+- User1 licenses will be replaced with M365 E5 (the keyword `<all>` means remove everything)
+- User2 licenses will be replaced with M365 Business Premium and Information Governance (the keyword `<all>` means remove everything)
+- User3 will have Information Governance added (nothing removed)
+- User4 will have Information Governance added (nothing removed)
 
 ## Fields in the CSV
 
@@ -35,7 +35,7 @@ This program uses the values from the String ID field.
 
 - Use email address or sign in name for user
 - Use can use a comma separated list of licenses
-- You can use the keyword ‘<all>’ in LicensesToRemove 
+- You can use the keyword `<all>` in LicensesToRemove 
 - If there is a License in both ToAdd and ToRemove, adding wins.
 - User Licenses will first be checked to see if they already comply with request.
 - An Invalid SKU will pause the code.  In this case a valid list of SKUs will be displayed so the entry can be fixed.
@@ -49,4 +49,3 @@ These modules are required.  You can use the included `ModuleManager.cmd` script
 - Microsoft.Graph.Authentication
 - Microsoft.Graph.Users
 - Microsoft.Graph.Identity.DirectoryManagement
-
